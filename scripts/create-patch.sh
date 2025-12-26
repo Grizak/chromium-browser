@@ -13,14 +13,14 @@ cd /cr/chromium
 mkdir -p "$PATCHES_DIR"
 
 # Find the next patch number
-EXISTING_PATCHES=$(ls -1 "$PATHCHES_DIR"/*.patch 2>/dev/null | wc -l)
+EXISTING_PATCHES=$(ls -1 "$PATCHES_DIR"/*.patch 2>/dev/null | wc -l)
 NEXT_NUMBER=$((EXISTING_PATCHES + 1))
 PADDED_NUMBER=$(printf "%03d" $NEXT_NUMBER)
 
-PATCH_FILE=$PATCHES_DIR/${$PADDED_NUMBER}-${$PATCH_NUMBER}.patch
+PATCH_FILE=$PATCHES_DIR/${PADDED_NUMBER}-${PATCH_NAME}.patch
 
 # Check if chromium dir exists
-if [ ! -d "$CRHOMIUM_DIR" ]; then
+if [ ! -d "$CHROMIUM_DIR" ]; then
 	echo "Error: chromium directory not found. Run 'pnpm setup' first."
 	exit 1
 fi
@@ -28,7 +28,7 @@ fi
 # Generate the patch
 echo "Creating patch: $PATCH_FILE"
 cd "$CHROMIUM_DIR"
-gir diff > "../$PATCH_FILE"
+git diff HEAD~1 > "../$PATCH_FILE"
 cd ..
 
 if [ -s "$PATCH_FILE" ]; then

@@ -7,6 +7,7 @@ A dev-focused browser built on top of Chromium with custom patches and enhanceme
 This repository contains the source code and build configuration for our custom browser. Rather than committing the entire Chromium codebase, we maintain a lightweight patch-based system that applies our modifications at build time.
 
 **Key features:**
+
 - Custom UI/UX built on Chromium
 - Developer-focused tools and enhancements
 - Lightweight repository (only patches tracked in Git)
@@ -27,16 +28,19 @@ Before getting started, ensure you have the following installed:
 Depending on your operating system, you'll also need:
 
 **macOS:**
+
 ```bash
 xcode-select --install
 ```
 
 **Linux (Ubuntu/Debian):**
+
 ```bash
 sudo apt-get install build-essential python3 curl git
 ```
 
 **Windows:**
+
 - Visual Studio Build Tools or Visual Studio Community (with C++ workload)
 - Python 3
 
@@ -62,21 +66,14 @@ pnpm run setup
 ```
 
 This will:
+
 - Clone the latest Chromium source
 - Apply all patches from the `patches/` directory
 - Validate the setup
 
 ### 4. Build the Browser
 
-```bash
-pnpm run build
-```
-
-Or, if you want to build without manually running setup first:
-
-```bash
-pnpm run build  # Automatically runs setup first
-```
+Use autoninja and GN from the [depot tools](https://chromium.googlesource.com/chromium/tools/depot_tools) to build the browser
 
 ## Development Workflow
 
@@ -85,6 +82,7 @@ pnpm run build  # Automatically runs setup first
 When you need to modify Chromium source code:
 
 1. **Make your changes** in the `chromium/` directory:
+
    ```bash
    cd chromium
    # Edit files...
@@ -93,11 +91,12 @@ When you need to modify Chromium source code:
    ```
 
 2. **Create a patch** from your changes:
+
    ```bash
    pnpm create-patch "descriptive-name"
    ```
-   
-   This will generate a numbered patch file like `patches/001-descriptive-name.patch`
+
+   This will generate a numbered patch file like `patches/001-descriptive-name.patch` from the changes between HEAD and the commit before HEAD
 
 3. **Commit the patch** to the main repository:
    ```bash
@@ -108,10 +107,10 @@ When you need to modify Chromium source code:
 
 ### Applying Patches
 
-Patches are automatically applied when you run `pnpm run setup`. If you make changes to patches or add new ones, just run setup again:
+You can apply patches with the `pnpm apply-patches` command:
 
 ```bash
-pnpm run setup
+pnpm apply-patches
 ```
 
 ### Reviewing Patches
@@ -154,11 +153,8 @@ pnpm run setup
 # Create a new patch from Chromium modifications
 pnpm create-patch "patch-name"
 
-# Build the browser (includes setup)
-pnpm run build
-
-# Build without setup (if already set up)
-cd chromium && npm run build
+# Only apply patches
+pnpm apply-patches
 ```
 
 ## Updating Chromium
@@ -217,6 +213,7 @@ When adding new features or fixes to Chromium:
 5. Push to your branch and create a pull request
 
 **Patch naming conventions:**
+
 - Use lowercase with hyphens: `001-feature-name.patch`
 - Be descriptive: `001-dev-tools-sidebar.patch`
 - Patches are applied in numerical order

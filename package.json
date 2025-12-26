@@ -1,8 +1,9 @@
 {
   "name": "chromium",
   "scripts": {
-	"setup": "tsx scripts/setup-build.ts"
-	"create-patch": "./scripts/create-patch.sh"
+    "setup": "tsx scripts/setup-build.ts",
+    "create-patch": "./scripts/create-patch.sh",
+    "apply-patches": "tsx scripts/apply-patches.ts"
   },
   "packageManager": "pnpm@10.26.2",
   "devDependencies": {

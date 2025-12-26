@@ -1,9 +1,10 @@
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
-const CHROMIUM_DIR = "./chromium";
-const PATCHES_DIR = "./patches";
+const CHROMIUM_DIR = path.resolve(process.cwd(), "chromium");
+const PATCHES_DIR = path.resolve(process.cwd(), "patches");
 
 interface StepConfig {
   name: string;
@@ -147,7 +148,11 @@ async function main() {
   );
 }
 
-main().catch((err) => {
-  log(`Setup failed: ${err}`, "error");
-  process.exit(1);
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    log(`Setup failed: ${err}`, "error");
+    process.exit(1);
+  });
+}
+
+export { downloadChromium, checkoutVersion, applyPatches, validateSetup };
