@@ -1,0 +1,5 @@
+chromium
+node_modules
+.cipd
+.gclient*
+.gcs*
