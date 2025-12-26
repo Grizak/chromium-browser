@@ -239,7 +239,7 @@ git config --global user.email "your.email@example.com"
 
 ## License
 
-[Add your license here]
+MIT License
 
 ## Support
 
