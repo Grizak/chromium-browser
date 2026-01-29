@@ -3,7 +3,7 @@
 set -e
 
 PATCH_NAME="$1"
-CHROMIUM_DIR="./chromium"
+CHROMIUM_DIR="./src"
 PATCHES_DIR="./patches"
 
 # Set working directory
@@ -28,7 +28,7 @@ fi
 # Generate the patch
 echo "Creating patch: $PATCH_FILE"
 cd "$CHROMIUM_DIR"
-git diff HEAD~1 > "../$PATCH_FILE"
+git diff HEAD~1 HEAD > "../$PATCH_FILE"
 cd ..
 
 if [ -s "$PATCH_FILE" ]; then
