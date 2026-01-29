@@ -1,0 +1,12 @@
+diff --git a/.gitignore b/.gitignore
+index 4c61af331b827..2113c0380c18e 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -347,3 +347,6 @@ third_party/rust/target/
+ 
+ # Trace files created when using --trace-startup.
+ **/chrometrace.log
++
++# VSCode workspace settings
++.vscode
+\ No newline at end of file

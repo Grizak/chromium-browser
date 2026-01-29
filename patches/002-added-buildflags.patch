@@ -1,0 +1,49 @@
+diff --git a/build/scope_flags.gni b/build/scope_flags.gni
+new file mode 100644
+index 0000000000000..0c161c8dc48c7
+--- /dev/null
++++ b/build/scope_flags.gni
+@@ -0,0 +1,23 @@
++declare_args() {
++  is_scope_browser = false
++
++  is_scope_stable = false
++  is_scope_beta = false
++  is_scope_dev = true
++
++  scope_version_major = 1
++  scope_version_minor = 0
++  scope_version_patch = 0
++}
++
++# Write version numbers for C++ access
++write_file("$root_gen_dir/scope_version.h",
++  string_join("\n", [
++    "#pragma once",
++    "#define SCOPE_VERSION_MAJOR ${scope_version_major}",
++    "#define SCOPE_VERSION_MINOR ${scope_version_minor}",
++    "#define SCOPE_VERSION_PATCH ${scope_version_patch}",
++    "#define SCOPE_VERSION_STRING \"${scope_version_major}.${scope_version_minor}.${scope_version_patch}\"",
++    ""
++  ])
++)
+diff --git a/chrome/common/features.gni b/chrome/common/features.gni
+index 5b8e39bf107fa..f8843f6282bd7 100644
+--- a/chrome/common/features.gni
++++ b/chrome/common/features.gni
+@@ -6,6 +6,7 @@ import("//build/config/chrome_build.gni")
+ import("//build/config/compiler/compiler.gni")
+ import("//build/config/dcheck_always_on.gni")
+ import("//build/config/features.gni")
++import("//build/scope_flags.gni")
+ import("//components/compose/features.gni")
+ import("//components/safe_browsing/buildflags.gni")
+ import("//components/sharing_message/buildflags.gni")
+@@ -110,6 +111,7 @@ chrome_grit_defines = [
+   "enable_webui_certificate_viewer=$enable_webui_certificate_viewer",
+   "enable_webui_tab_strip=$enable_webui_tab_strip",
+   "is_official_build=$is_official_build",
++  "is_scope_browser=$is_scope_browser",
+   "safe_browsing_mode=$safe_browsing_mode",
+   "optimize_webui=$optimize_webui",
+   "chrome_root_store_cert_management_ui=$chrome_root_store_cert_management_ui",
