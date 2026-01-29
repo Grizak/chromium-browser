@@ -1,5 +1,12 @@
 chromium
 node_modules
 .cipd
-.gclient*
+*gclient*
 .gcs*
+*src*
+
+siso-credential-helper.sh
+backend.star
+
+run-builds-with-restart.sh
+build_restarts.log

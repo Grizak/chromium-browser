@@ -81,7 +81,7 @@ Use autoninja and GN from the [depot tools](https://chromium.googlesource.com/ch
 
 When you need to modify Chromium source code:
 
-1. **Make your changes** in the `chromium/` directory:
+1. **Make your changes** in the `chromium/` directory and commit your changes (the create-patches.sh script only creates patches from commits, not uncommited files):
 
    ```bash
    cd chromium
@@ -96,7 +96,7 @@ When you need to modify Chromium source code:
    pnpm create-patch "descriptive-name"
    ```
 
-   This will generate a numbered patch file like `patches/001-descriptive-name.patch` from the changes between HEAD and the commit before HEAD
+   This will generate a numbered patch file like `patches/001-descriptive-name.patch` from the changes between HEAD and the commit before HEAD from the git repo in `$project_root/chromium`
 
 3. **Commit the patch** to the main repository:
    ```bash
@@ -138,7 +138,7 @@ ls -la patches/
 ├── scripts/
 │   ├── setup-build.ts       # Main setup script
 │   └── create-patch.sh      # Patch creation helper
-├── chromium/                # Chromium source (git ignored)
+├── chromium/                # Chromium source (git ignored), holds another git repo that is the actual chromium repo (commit to this repo before creating patches)
 ├── package.json
 ├── .gitignore
 └── README.md

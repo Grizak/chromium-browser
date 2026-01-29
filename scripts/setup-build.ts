@@ -1,9 +1,9 @@
-import { execSync } from "child_process";
+import { execSync, ExecSyncOptionsWithStringEncoding } from "child_process";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-const CHROMIUM_DIR = path.resolve(process.cwd(), "chromium");
+const CHROMIUM_DIR = path.resolve(process.cwd(), "src");
 const PATCHES_DIR = path.resolve(process.cwd(), "patches");
 
 interface StepConfig {
@@ -20,11 +20,23 @@ function log(message: string, type: "info" | "error" | "success" = "info") {
   console.log(`${prefix} ${message}`);
 }
 
-function exec(command: string, cwd: string = process.cwd()) {
+function exec(
+  command: string,
+  cwd: string = process.cwd(),
+  options: Partial<ExecSyncOptionsWithStringEncoding> = {}
+) {
   try {
-    return execSync(command, { cwd, encoding: "utf-8" }).trim();
-  } catch (err) {
-    throw new Error(`Command failed: ${command}\n${err}`);
+    return execSync(command, {
+      cwd,
+      encoding: "utf-8",
+      stdio: ["pipe", "inherit", "inherit"],
+      ...options,
+    }).trim();
+  } catch (err: any) {
+    const message = err.stderr?.toString() || err.message || String(err);
+    throw new Error(
+      `Command ${command} failed with a non-zero exit code:\n${message}`
+    );
   }
 }
 
@@ -40,7 +52,9 @@ function downloadChromium() {
     return;
   }
 
-  exec("git clone https://chromium.googlesource.com/chromium/src.git chromium");
+  exec("fetch --nohooks chromium", process.cwd(), {
+    stdio: ["pipe", "pipe", "inherit"],
+  });
   log("Chromium source code downloaded successfully.", "success");
 }
 
