@@ -1,0 +1,797 @@
+diff --git a/build/BUILD.gn b/build/BUILD.gn
+index 95ceaf090e6c0..c3800bdda8c3c 100644
+--- a/build/BUILD.gn
++++ b/build/BUILD.gn
+@@ -9,6 +9,7 @@ import("//build/config/chromeos/args.gni")
+ import("//build/config/features.gni")
+ import("//build/util/process_version.gni")
+ import("//build_overrides/build.gni")
++import("//build/scope_flags.gni")
+ 
+ if (is_ios) {
+   import("//build/config/ios/ios_sdk.gni")
+@@ -142,3 +143,22 @@ if (is_chromeos) {
+     process_only = true
+   }
+ }
++
++buildflag_header("scope_buildflags") {
++  header = "scope_buildflags.h"
++  flags = [ 
++    "IS_SCOPE_BROWSER=$is_scope_browser", 
++    "IS_SCOPE_STABLE=$is_scope_stable", 
++    "IS_SCOPE_BETA=$is_scope_beta", 
++    "IS_SCOPE_DEV=$is_scope_dev",
++    "SCOPE_VERSION_MAJOR=$scope_version_major",
++    "SCOPE_VERSION_MINOR=$scope_version_minor",
++    "SCOPE_VERSION_PATCH=$scope_version_patch",
++    "SCOPE_CHANNEL=$scope_channel",
++    "SCOPE_VERSION_STRING=$scope_version_string"
++  ]
++}
++
++source_set("scope_buildflags_source") {
++  public_deps = [ ":scope_buildflags" ]
++}
+\ No newline at end of file
+diff --git a/build/scope_flags.gni b/build/scope_flags.gni
+index 0c161c8dc48c7..53708d1e4a4de 100644
+--- a/build/scope_flags.gni
++++ b/build/scope_flags.gni
+@@ -10,14 +10,12 @@ declare_args() {
+   scope_version_patch = 0
+ }
+ 
+-# Write version numbers for C++ access
+-write_file("$root_gen_dir/scope_version.h",
+-  string_join("\n", [
+-    "#pragma once",
+-    "#define SCOPE_VERSION_MAJOR ${scope_version_major}",
+-    "#define SCOPE_VERSION_MINOR ${scope_version_minor}",
+-    "#define SCOPE_VERSION_PATCH ${scope_version_patch}",
+-    "#define SCOPE_VERSION_STRING \"${scope_version_major}.${scope_version_minor}.${scope_version_patch}\"",
+-    ""
+-  ])
+-)
++scope_channel = "dev"
++
++if (is_scope_stable) {
++  scope_channel = "stable"
++} else if (is_scope_beta) {
++  scope_channel = "beta"
++}
++
++scope_version_string = "$scope_version_major.$scope_version_minor.$scope_version_patch-$scope_channel"
+diff --git a/chrome/BUILD.gn b/chrome/BUILD.gn
+index f8d29b704ab49..a1f61ca1b0a2e 100644
+--- a/chrome/BUILD.gn
++++ b/chrome/BUILD.gn
+@@ -31,6 +31,7 @@ import("//tools/resources/generate_resource_allowlist.gni")
+ import("//tools/v8_context_snapshot/v8_context_snapshot.gni")
+ import("//ui/gl/features.gni")
+ import("//v8/gni/v8.gni")
++import("//build/scope_flags.gni")
+ 
+ assert(!is_fuchsia, "Fuchsia shouldn't use anything in //chrome")
+ 
+@@ -150,6 +151,8 @@ if (!is_android && !is_mac) {
+ 
+   if (is_win) {
+     _chrome_output_name = "initialexe/chrome"
++  } else if (is_scope_browser) {
++    _chrome_output_name = "scope"
+   } else {
+     _chrome_output_name = "chrome"
+   }
+@@ -184,6 +187,13 @@ if (!is_android && !is_mac) {
+       deps += [ "//components/exo/wayland:ui_controls_protocol_stub" ]
+     }
+ 
++    if (is_scope_browser) {
++      # Scope buildflags
++      deps += [
++        "//build:scope_buildflags_source"
++      ]
++    }
++
+     if (is_win) {
+       sources += [
+         "app/chrome_exe.rc",
+@@ -1704,6 +1714,10 @@ if (is_linux || is_chromeos) {
+     extract_symbols("chrome_symbols") {
+       binary = "$root_out_dir/chrome"
+ 
++      if (is_scope_browser) {
++        binary = "$root_out_dir/scope"
++      }
++
+       if (current_cpu == "x86") {
+         # GYP used "ia32" so keep that naming for back-compat.
+         symbol_file = "$root_out_dir/chrome.breakpad.ia32"
+diff --git a/chrome/app/resources/scope_strings_af.xtb b/chrome/app/resources/scope_strings_af.xtb
+new file mode 120000
+index 0000000000000..1363f6a42a6ac
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_af.xtb
+@@ -0,0 +1 @@
++chromium_strings_af.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_am.xtb b/chrome/app/resources/scope_strings_am.xtb
+new file mode 120000
+index 0000000000000..f2fb5a80f7562
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_am.xtb
+@@ -0,0 +1 @@
++chromium_strings_am.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_ar.xtb b/chrome/app/resources/scope_strings_ar.xtb
+new file mode 120000
+index 0000000000000..be97519a51b73
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_ar.xtb
+@@ -0,0 +1 @@
++chromium_strings_ar.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_as.xtb b/chrome/app/resources/scope_strings_as.xtb
+new file mode 120000
+index 0000000000000..01c3035efdcce
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_as.xtb
+@@ -0,0 +1 @@
++chromium_strings_as.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_az.xtb b/chrome/app/resources/scope_strings_az.xtb
+new file mode 120000
+index 0000000000000..f648484870b29
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_az.xtb
+@@ -0,0 +1 @@
++chromium_strings_az.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_be.xtb b/chrome/app/resources/scope_strings_be.xtb
+new file mode 120000
+index 0000000000000..fe8cd3f43a23d
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_be.xtb
+@@ -0,0 +1 @@
++chromium_strings_be.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_bg.xtb b/chrome/app/resources/scope_strings_bg.xtb
+new file mode 120000
+index 0000000000000..288fa5b5e0b91
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_bg.xtb
+@@ -0,0 +1 @@
++chromium_strings_bg.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_bn.xtb b/chrome/app/resources/scope_strings_bn.xtb
+new file mode 120000
+index 0000000000000..f61ac9112e421
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_bn.xtb
+@@ -0,0 +1 @@
++chromium_strings_bn.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_bs.xtb b/chrome/app/resources/scope_strings_bs.xtb
+new file mode 120000
+index 0000000000000..47edafe877a29
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_bs.xtb
+@@ -0,0 +1 @@
++chromium_strings_bs.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_ca.xtb b/chrome/app/resources/scope_strings_ca.xtb
+new file mode 120000
+index 0000000000000..e49f806a5fb27
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_ca.xtb
+@@ -0,0 +1 @@
++chromium_strings_ca.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_cs.xtb b/chrome/app/resources/scope_strings_cs.xtb
+new file mode 120000
+index 0000000000000..c30b5ba28994f
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_cs.xtb
+@@ -0,0 +1 @@
++chromium_strings_cs.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_cy.xtb b/chrome/app/resources/scope_strings_cy.xtb
+new file mode 120000
+index 0000000000000..6617dd856a916
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_cy.xtb
+@@ -0,0 +1 @@
++chromium_strings_cy.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_da.xtb b/chrome/app/resources/scope_strings_da.xtb
+new file mode 120000
+index 0000000000000..3933661fcd44b
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_da.xtb
+@@ -0,0 +1 @@
++chromium_strings_da.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_de.xtb b/chrome/app/resources/scope_strings_de.xtb
+new file mode 120000
+index 0000000000000..db288bca240a7
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_de.xtb
+@@ -0,0 +1 @@
++chromium_strings_de.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_el.xtb b/chrome/app/resources/scope_strings_el.xtb
+new file mode 120000
+index 0000000000000..cfad397ea65d7
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_el.xtb
+@@ -0,0 +1 @@
++chromium_strings_el.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_en-GB.xtb b/chrome/app/resources/scope_strings_en-GB.xtb
+new file mode 120000
+index 0000000000000..628f93c1d66c1
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_en-GB.xtb
+@@ -0,0 +1 @@
++chromium_strings_en-GB.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_es-419.xtb b/chrome/app/resources/scope_strings_es-419.xtb
+new file mode 120000
+index 0000000000000..4323aa729a279
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_es-419.xtb
+@@ -0,0 +1 @@
++chromium_strings_es-419.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_es.xtb b/chrome/app/resources/scope_strings_es.xtb
+new file mode 120000
+index 0000000000000..b4c3e9a5ca160
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_es.xtb
+@@ -0,0 +1 @@
++chromium_strings_es.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_et.xtb b/chrome/app/resources/scope_strings_et.xtb
+new file mode 120000
+index 0000000000000..0648e381f095f
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_et.xtb
+@@ -0,0 +1 @@
++chromium_strings_et.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_eu.xtb b/chrome/app/resources/scope_strings_eu.xtb
+new file mode 120000
+index 0000000000000..e519de2b7201c
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_eu.xtb
+@@ -0,0 +1 @@
++chromium_strings_eu.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_fa.xtb b/chrome/app/resources/scope_strings_fa.xtb
+new file mode 120000
+index 0000000000000..fa1b36dd3f760
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_fa.xtb
+@@ -0,0 +1 @@
++chromium_strings_fa.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_fi.xtb b/chrome/app/resources/scope_strings_fi.xtb
+new file mode 120000
+index 0000000000000..c1942c59d49b6
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_fi.xtb
+@@ -0,0 +1 @@
++chromium_strings_fi.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_fil.xtb b/chrome/app/resources/scope_strings_fil.xtb
+new file mode 120000
+index 0000000000000..8e506ba172bdd
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_fil.xtb
+@@ -0,0 +1 @@
++chromium_strings_fil.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_fr-CA.xtb b/chrome/app/resources/scope_strings_fr-CA.xtb
+new file mode 120000
+index 0000000000000..792d520a8f1ca
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_fr-CA.xtb
+@@ -0,0 +1 @@
++chromium_strings_fr-CA.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_fr.xtb b/chrome/app/resources/scope_strings_fr.xtb
+new file mode 120000
+index 0000000000000..1ae03f6671cac
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_fr.xtb
+@@ -0,0 +1 @@
++chromium_strings_fr.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_gl.xtb b/chrome/app/resources/scope_strings_gl.xtb
+new file mode 120000
+index 0000000000000..aa0774616e5db
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_gl.xtb
+@@ -0,0 +1 @@
++chromium_strings_gl.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_gu.xtb b/chrome/app/resources/scope_strings_gu.xtb
+new file mode 120000
+index 0000000000000..03315a0472355
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_gu.xtb
+@@ -0,0 +1 @@
++chromium_strings_gu.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_hi.xtb b/chrome/app/resources/scope_strings_hi.xtb
+new file mode 120000
+index 0000000000000..eaef217d3510f
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_hi.xtb
+@@ -0,0 +1 @@
++chromium_strings_hi.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_hr.xtb b/chrome/app/resources/scope_strings_hr.xtb
+new file mode 120000
+index 0000000000000..8b075b8b518ba
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_hr.xtb
+@@ -0,0 +1 @@
++chromium_strings_hr.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_hu.xtb b/chrome/app/resources/scope_strings_hu.xtb
+new file mode 120000
+index 0000000000000..df14eebfd72f4
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_hu.xtb
+@@ -0,0 +1 @@
++chromium_strings_hu.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_hy.xtb b/chrome/app/resources/scope_strings_hy.xtb
+new file mode 120000
+index 0000000000000..1a971dad0b42f
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_hy.xtb
+@@ -0,0 +1 @@
++chromium_strings_hy.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_id.xtb b/chrome/app/resources/scope_strings_id.xtb
+new file mode 120000
+index 0000000000000..a6f7d2d9d46b8
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_id.xtb
+@@ -0,0 +1 @@
++chromium_strings_id.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_is.xtb b/chrome/app/resources/scope_strings_is.xtb
+new file mode 120000
+index 0000000000000..5e13d610747a0
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_is.xtb
+@@ -0,0 +1 @@
++chromium_strings_is.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_it.xtb b/chrome/app/resources/scope_strings_it.xtb
+new file mode 120000
+index 0000000000000..5ddcbcf785181
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_it.xtb
+@@ -0,0 +1 @@
++chromium_strings_it.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_iw.xtb b/chrome/app/resources/scope_strings_iw.xtb
+new file mode 120000
+index 0000000000000..1294c1d992e7b
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_iw.xtb
+@@ -0,0 +1 @@
++chromium_strings_iw.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_ja.xtb b/chrome/app/resources/scope_strings_ja.xtb
+new file mode 120000
+index 0000000000000..30569acc07bc4
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_ja.xtb
+@@ -0,0 +1 @@
++chromium_strings_ja.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_ka.xtb b/chrome/app/resources/scope_strings_ka.xtb
+new file mode 120000
+index 0000000000000..28db5111c37e6
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_ka.xtb
+@@ -0,0 +1 @@
++chromium_strings_ka.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_kk.xtb b/chrome/app/resources/scope_strings_kk.xtb
+new file mode 120000
+index 0000000000000..c2a8ac8f0b016
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_kk.xtb
+@@ -0,0 +1 @@
++chromium_strings_kk.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_km.xtb b/chrome/app/resources/scope_strings_km.xtb
+new file mode 120000
+index 0000000000000..d82d430a0e472
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_km.xtb
+@@ -0,0 +1 @@
++chromium_strings_km.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_kn.xtb b/chrome/app/resources/scope_strings_kn.xtb
+new file mode 120000
+index 0000000000000..2b3588167e791
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_kn.xtb
+@@ -0,0 +1 @@
++chromium_strings_kn.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_ko.xtb b/chrome/app/resources/scope_strings_ko.xtb
+new file mode 120000
+index 0000000000000..54e1dc8fc8a68
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_ko.xtb
+@@ -0,0 +1 @@
++chromium_strings_ko.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_ky.xtb b/chrome/app/resources/scope_strings_ky.xtb
+new file mode 120000
+index 0000000000000..8ee6009195a84
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_ky.xtb
+@@ -0,0 +1 @@
++chromium_strings_ky.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_lo.xtb b/chrome/app/resources/scope_strings_lo.xtb
+new file mode 120000
+index 0000000000000..8bd161eda5c26
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_lo.xtb
+@@ -0,0 +1 @@
++chromium_strings_lo.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_lt.xtb b/chrome/app/resources/scope_strings_lt.xtb
+new file mode 120000
+index 0000000000000..92376e7546959
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_lt.xtb
+@@ -0,0 +1 @@
++chromium_strings_lt.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_lv.xtb b/chrome/app/resources/scope_strings_lv.xtb
+new file mode 120000
+index 0000000000000..2e5b9ec818317
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_lv.xtb
+@@ -0,0 +1 @@
++chromium_strings_lv.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_mk.xtb b/chrome/app/resources/scope_strings_mk.xtb
+new file mode 120000
+index 0000000000000..c1682162bcfbc
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_mk.xtb
+@@ -0,0 +1 @@
++chromium_strings_mk.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_ml.xtb b/chrome/app/resources/scope_strings_ml.xtb
+new file mode 120000
+index 0000000000000..b2d015f4c0155
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_ml.xtb
+@@ -0,0 +1 @@
++chromium_strings_ml.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_mn.xtb b/chrome/app/resources/scope_strings_mn.xtb
+new file mode 120000
+index 0000000000000..5997c8f921b18
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_mn.xtb
+@@ -0,0 +1 @@
++chromium_strings_mn.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_mr.xtb b/chrome/app/resources/scope_strings_mr.xtb
+new file mode 120000
+index 0000000000000..1d7ed81998ac7
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_mr.xtb
+@@ -0,0 +1 @@
++chromium_strings_mr.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_ms.xtb b/chrome/app/resources/scope_strings_ms.xtb
+new file mode 120000
+index 0000000000000..eab1f223f19aa
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_ms.xtb
+@@ -0,0 +1 @@
++chromium_strings_ms.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_my.xtb b/chrome/app/resources/scope_strings_my.xtb
+new file mode 120000
+index 0000000000000..638a4d0c0a257
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_my.xtb
+@@ -0,0 +1 @@
++chromium_strings_my.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_ne.xtb b/chrome/app/resources/scope_strings_ne.xtb
+new file mode 120000
+index 0000000000000..c887f0d019319
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_ne.xtb
+@@ -0,0 +1 @@
++chromium_strings_ne.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_nl.xtb b/chrome/app/resources/scope_strings_nl.xtb
+new file mode 120000
+index 0000000000000..48ce74036d0a6
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_nl.xtb
+@@ -0,0 +1 @@
++chromium_strings_nl.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_no.xtb b/chrome/app/resources/scope_strings_no.xtb
+new file mode 120000
+index 0000000000000..2a4af8f8ea3e5
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_no.xtb
+@@ -0,0 +1 @@
++chromium_strings_no.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_or.xtb b/chrome/app/resources/scope_strings_or.xtb
+new file mode 120000
+index 0000000000000..46f92ed54e3de
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_or.xtb
+@@ -0,0 +1 @@
++chromium_strings_or.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_pa.xtb b/chrome/app/resources/scope_strings_pa.xtb
+new file mode 120000
+index 0000000000000..99410f4dcf3fb
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_pa.xtb
+@@ -0,0 +1 @@
++chromium_strings_pa.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_pl.xtb b/chrome/app/resources/scope_strings_pl.xtb
+new file mode 120000
+index 0000000000000..55cd42df7ccb5
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_pl.xtb
+@@ -0,0 +1 @@
++chromium_strings_pl.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_pt-BR.xtb b/chrome/app/resources/scope_strings_pt-BR.xtb
+new file mode 120000
+index 0000000000000..e81895a34888e
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_pt-BR.xtb
+@@ -0,0 +1 @@
++chromium_strings_pt-BR.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_pt-PT.xtb b/chrome/app/resources/scope_strings_pt-PT.xtb
+new file mode 120000
+index 0000000000000..bfd2dd96d5ace
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_pt-PT.xtb
+@@ -0,0 +1 @@
++chromium_strings_pt-PT.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_ro.xtb b/chrome/app/resources/scope_strings_ro.xtb
+new file mode 120000
+index 0000000000000..d59bea0e219e9
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_ro.xtb
+@@ -0,0 +1 @@
++chromium_strings_ro.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_ru.xtb b/chrome/app/resources/scope_strings_ru.xtb
+new file mode 120000
+index 0000000000000..9dfb187d66c36
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_ru.xtb
+@@ -0,0 +1 @@
++chromium_strings_ru.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_si.xtb b/chrome/app/resources/scope_strings_si.xtb
+new file mode 120000
+index 0000000000000..fe9ea6881d192
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_si.xtb
+@@ -0,0 +1 @@
++chromium_strings_si.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_sk.xtb b/chrome/app/resources/scope_strings_sk.xtb
+new file mode 120000
+index 0000000000000..5840755ab383f
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_sk.xtb
+@@ -0,0 +1 @@
++chromium_strings_sk.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_sl.xtb b/chrome/app/resources/scope_strings_sl.xtb
+new file mode 120000
+index 0000000000000..4ff17d39856b2
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_sl.xtb
+@@ -0,0 +1 @@
++chromium_strings_sl.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_sq.xtb b/chrome/app/resources/scope_strings_sq.xtb
+new file mode 120000
+index 0000000000000..4a86b7a830223
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_sq.xtb
+@@ -0,0 +1 @@
++chromium_strings_sq.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_sr-Latn.xtb b/chrome/app/resources/scope_strings_sr-Latn.xtb
+new file mode 120000
+index 0000000000000..842554a883770
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_sr-Latn.xtb
+@@ -0,0 +1 @@
++chromium_strings_sr-Latn.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_sr.xtb b/chrome/app/resources/scope_strings_sr.xtb
+new file mode 120000
+index 0000000000000..d106fa65cdc11
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_sr.xtb
+@@ -0,0 +1 @@
++chromium_strings_sr.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_sv.xtb b/chrome/app/resources/scope_strings_sv.xtb
+new file mode 120000
+index 0000000000000..481e8ea79e14a
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_sv.xtb
+@@ -0,0 +1 @@
++chromium_strings_sv.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_sw.xtb b/chrome/app/resources/scope_strings_sw.xtb
+new file mode 120000
+index 0000000000000..638c6d3bc0915
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_sw.xtb
+@@ -0,0 +1 @@
++chromium_strings_sw.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_ta.xtb b/chrome/app/resources/scope_strings_ta.xtb
+new file mode 120000
+index 0000000000000..3b44539f32147
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_ta.xtb
+@@ -0,0 +1 @@
++chromium_strings_ta.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_te.xtb b/chrome/app/resources/scope_strings_te.xtb
+new file mode 120000
+index 0000000000000..0075ce50f0163
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_te.xtb
+@@ -0,0 +1 @@
++chromium_strings_te.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_th.xtb b/chrome/app/resources/scope_strings_th.xtb
+new file mode 120000
+index 0000000000000..bc5c2fbe42963
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_th.xtb
+@@ -0,0 +1 @@
++chromium_strings_th.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_tr.xtb b/chrome/app/resources/scope_strings_tr.xtb
+new file mode 120000
+index 0000000000000..f57526f6af291
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_tr.xtb
+@@ -0,0 +1 @@
++chromium_strings_tr.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_uk.xtb b/chrome/app/resources/scope_strings_uk.xtb
+new file mode 120000
+index 0000000000000..95245f3e4372b
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_uk.xtb
+@@ -0,0 +1 @@
++chromium_strings_uk.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_ur.xtb b/chrome/app/resources/scope_strings_ur.xtb
+new file mode 120000
+index 0000000000000..4798285582f65
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_ur.xtb
+@@ -0,0 +1 @@
++chromium_strings_ur.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_uz.xtb b/chrome/app/resources/scope_strings_uz.xtb
+new file mode 120000
+index 0000000000000..5da21514a0b73
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_uz.xtb
+@@ -0,0 +1 @@
++chromium_strings_uz.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_vi.xtb b/chrome/app/resources/scope_strings_vi.xtb
+new file mode 120000
+index 0000000000000..16534c5a0b91f
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_vi.xtb
+@@ -0,0 +1 @@
++chromium_strings_vi.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_zh-CN.xtb b/chrome/app/resources/scope_strings_zh-CN.xtb
+new file mode 120000
+index 0000000000000..8a9980503f790
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_zh-CN.xtb
+@@ -0,0 +1 @@
++chromium_strings_zh-CN.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_zh-HK.xtb b/chrome/app/resources/scope_strings_zh-HK.xtb
+new file mode 120000
+index 0000000000000..376acde2ce8e1
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_zh-HK.xtb
+@@ -0,0 +1 @@
++chromium_strings_zh-HK.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_zh-TW.xtb b/chrome/app/resources/scope_strings_zh-TW.xtb
+new file mode 120000
+index 0000000000000..3f01032edacc4
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_zh-TW.xtb
+@@ -0,0 +1 @@
++chromium_strings_zh-TW.xtb
+\ No newline at end of file
+diff --git a/chrome/app/resources/scope_strings_zu.xtb b/chrome/app/resources/scope_strings_zu.xtb
+new file mode 120000
+index 0000000000000..854dbe2b23f28
+--- /dev/null
++++ b/chrome/app/resources/scope_strings_zu.xtb
+@@ -0,0 +1 @@
++chromium_strings_zu.xtb
+\ No newline at end of file
+diff --git a/chrome/installer/linux/BUILD.gn b/chrome/installer/linux/BUILD.gn
+index 291ef25d7e29b..0b6c3c66ff78c 100644
+--- a/chrome/installer/linux/BUILD.gn
++++ b/chrome/installer/linux/BUILD.gn
+@@ -16,6 +16,7 @@ import("//third_party/angle/gni/angle.gni")
+ import("//third_party/widevine/cdm/widevine.gni")
+ import("//ui/gl/features.gni")
+ import("//ui/qt/qt.gni")
++import("//build/scope_flags.gni")
+ 
+ if (bundle_widevine_cdm) {
+   import("//media/cdm/library_cdm/cdm_paths.gni")
+@@ -36,6 +37,16 @@ packaging_files_executables = [
+   "$root_out_dir/chrome_sandbox",
+ ]
+ 
++if (is_scope_browser) {
++  packaging_files_executables = []
++  packaging_files_executables = [
++    "$root_out_dir/scope",
++    "$root_out_dir/chrome_crashpad_handler",
++    "$root_out_dir/chrome_management_service",
++    "$root_out_dir/chrome_sandbox",
++  ]
++}
++
+ packaging_files_shlibs = []
+ 
+ if (!use_static_angle) {
+@@ -171,6 +182,9 @@ action("merge_rpm_dependencies") {
+ 
+ strip_binary("strip_chrome_binary") {
+   binary_input = "$root_out_dir/chrome"
++  if (is_scope_browser) {
++    binary_input = "$root_out_dir/scope"
++  }
+   deps = [ "//chrome" ]
+ }
+ 
