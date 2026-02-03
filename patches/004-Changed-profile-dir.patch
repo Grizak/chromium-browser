@@ -1,0 +1,29 @@
+diff --git a/chrome/common/chrome_paths_linux.cc b/chrome/common/chrome_paths_linux.cc
+index 5575c049b222f..c30179ac8b423 100644
+--- a/chrome/common/chrome_paths_linux.cc
++++ b/chrome/common/chrome_paths_linux.cc
+@@ -15,6 +15,7 @@
+ #include "base/strings/string_util.h"
+ #include "build/branding_buildflags.h"
+ #include "build/build_config.h"
++#include "build/scope_buildflags.h"
+ #include "chrome/common/channel_info.h"
+ #include "chrome/common/chrome_paths_internal.h"
+ 
+@@ -70,6 +71,7 @@ bool GetUserMediaDirectory(const std::string& xdg_name,
+ //     "google-chrome" for stable channel official build
+ //     "google-chrome-beta" for beta channel official build
+ //     "google-chrome-unstable" for dev channel official build
++//     "scope" for Scope builds
+ //
+ // (Note that ChromeMainDelegate will override the value returned by this
+ // function if $CHROME_USER_DATA_DIR or --user-data-dir is set.)
+@@ -94,6 +96,8 @@ bool GetDefaultUserDataDirectory(base::FilePath* result) {
+   std::string data_dir_basename = "google-chrome-for-testing";
+ #elif BUILDFLAG(GOOGLE_CHROME_BRANDING)
+   std::string data_dir_basename = "google-chrome";
++#elif BUILDFLAG(IS_SCOPE_BROWSER)
++  std::string data_dir_basename = "scope";
+ #else
+   std::string data_dir_basename = "chromium";
+ #endif
